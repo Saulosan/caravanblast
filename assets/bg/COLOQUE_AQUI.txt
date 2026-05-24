@@ -1,0 +1,1 @@
+Mova seus arquivos bg-fase-01.png, bg-fase-01a.png, bg-fase-01b.png, bg-fase-01c.png, bg-fase-01d.png para esta pasta.

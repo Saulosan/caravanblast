@@ -1,0 +1,1 @@
+Mova seus GIFs (player.gif, Boss1.gif, Enemy.gif, Enemy2.gif, Enemy3.gif, Enemy4.gif, tiro-01.gif, tiro-02.gif, bullet.gif) para esta pasta.

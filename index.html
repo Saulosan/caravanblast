@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Caravan Blast!</title>
+  <link rel="stylesheet" href="css/style.css?v=1778040356"/>
+</head>
+<body>
+<div id="shell">
+  <div id="hud-left">
+    <div><div class="hud-label">Score</div><div class="hud-value" id="ui-score">000000</div></div>
+    <div class="hud-sep"></div>
+    <div><div class="hud-label">Vidas</div><div id="ui-lives" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"></div></div>
+    <div class="hud-sep"></div>
+    <div><div class="hud-label">Fase</div><div class="hud-value">01</div></div>
+    <div class="hud-sep"></div>
+    <div><div class="hud-label">Medalhas</div><div class="hud-value" id="ui-medals">0</div></div>
+    <div class="hud-sep"></div>
+    <div class="bar-wrap">
+      <div class="hud-label">Combo <span id="ui-combo-x" style="color:#ff0;font-size:14px;">x1</span></div>
+      <div class="bar-bg"><div class="bar-fill" id="ui-combo-bar" style="background:linear-gradient(90deg,#ff8800,#ffdd00);width:100%;"></div></div>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="bar-wrap">
+      <div class="hud-label">Laser</div>
+      <div class="bar-bg"><div class="bar-fill" id="ui-laser-bar" style="width:100%;"></div></div>
+      <div style="font-size:9px;color:#446;" id="ui-laser-status">pronto</div>
+    </div>
+    <div class="hud-sep"></div>
+    <div id="boss-hp-wrap" style="display:none">
+      <div class="hud-label">Boss HP</div>
+      <div class="hud-value" id="ui-bosshp" style="color:#f44;">---</div>
+    </div>
+    <div style="margin-top:auto;">
+      <div class="hud-sep"></div>
+      <div class="hud-label" style="margin-bottom:4px;">Controles</div>
+      <div class="cmd-block">
+        <div class="cmd-row"><span class="cmd-key">&#8592;&#8594;&#8593;&#8595;</span><span class="cmd-desc">Mover</span></div>
+        <div class="cmd-row"><span class="cmd-key">X</span><span class="cmd-desc">Tiro</span></div>
+        <div class="cmd-row"><span class="cmd-key">C</span><span class="cmd-desc">Laser</span></div>
+        <div class="cmd-row"><span class="cmd-key">A</span><span class="cmd-desc">Tiro &#127918;</span></div>
+        <div class="cmd-row"><span class="cmd-key">X</span><span class="cmd-desc">Laser &#127918;</span></div>
+      </div>
+      <div id="gp-indicator">&#127918; sem controle</div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="game"></canvas>
+  </div>
+
+  <div id="hud-right">
+    <div class="hud-label" style="color:#555;">-- DEBUG --</div>
+    <div class="cmd-block" style="margin-bottom:4px;">
+      <div class="cmd-row"><span class="cmd-key">B</span><span class="cmd-desc" style="color:#f88;">Boss</span></div>
+      <div class="cmd-row"><span class="cmd-key">N</span><span class="cmd-desc" id="dbg-lives-lbl">Inf Vidas</span></div>
+      <div class="cmd-row"><span class="cmd-key">M</span><span class="cmd-desc" id="dbg-inv-lbl">Invenc.</span></div>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-label" style="color:#444;">BG Layers</div>
+    <div id="dbg-bg"></div>
+    <div class="hud-label" style="color:#444;margin-top:4px;">Sprites</div>
+    <div id="dbg-spr"></div>
+  </div>
+</div>
+
+<div id="gif-pool">
+  <canvas id="gc-player"></canvas><canvas id="gc-shot"></canvas>
+  <canvas id="gc-laser"></canvas><canvas id="gc-enemy"></canvas>
+  <canvas id="gc-enemy2"></canvas><canvas id="gc-enemy3"></canvas>
+  <canvas id="gc-enemy4"></canvas><canvas id="gc-bullet"></canvas>
+  <canvas id="gc-boss"></canvas><canvas id="gc-title-ship"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gifler@0.1.0/gifler.min.js"></script>
+<script src="js/utils.js?v=1778040356"></script>
+<script src="js/config.js?v=1778040356"></script>
+<script src="js/audio.js?v=1778040356"></script>
+<script src="js/assets.js?v=1778040356"></script>
+<script src="js/input.js?v=1778040356"></script>
+<script src="js/state.js?v=1778040356"></script>
+<script src="js/player.js?v=1778040356"></script>
+<script src="js/enemies.js?v=1778040356"></script>
+<script src="js/boss.js?v=1778040356"></script>
+<script src="js/collision.js?v=1778040356"></script>
+<script src="js/hud.js?v=1778040356"></script>
+<script src="js/render.js?v=1778040356"></script>
+<script src="js/main.js?v=1778040356"></script>
+</body>
+</html>
