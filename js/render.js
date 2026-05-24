@@ -147,13 +147,50 @@ function drawBoss(b){
   ctx.restore();
 }
 
+function drawPlayerArrivalTrail(p){
+  if(!p.arriving) return;
+
+  const cx = p.x + p.w / 2;
+  const tailTop = p.y + p.h * 0.75;
+  const tailLen = p.arrivalPhase === 0 ? 90 : 52;
+  const tailW = p.arrivalPhase === 0 ? 18 : 10;
+
+  ctx.save();
+
+  const grad = ctx.createLinearGradient(cx, tailTop, cx, tailTop + tailLen);
+  grad.addColorStop(0, "rgba(180,255,220,0.95)");
+  grad.addColorStop(0.25, "rgba(0,255,120,0.85)");
+  grad.addColorStop(0.7, "rgba(0,180,90,0.35)");
+  grad.addColorStop(1, "rgba(0,255,120,0)");
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(cx - tailW, tailTop);
+  ctx.lineTo(cx + tailW, tailTop);
+  ctx.lineTo(cx + tailW * 0.35, tailTop + tailLen);
+  ctx.lineTo(cx - tailW * 0.35, tailTop + tailLen);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.globalAlpha = 0.8;
+  ctx.shadowColor = "#00ff88";
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "rgba(180,255,220,0.8)";
+  ctx.fillRect(cx - 3, tailTop, 6, tailLen * 0.85);
+
+  ctx.restore();
+}
+
 function drawPlayer(){
   const p=G.player;
-  if(p.inv>0&&Math.floor(p.inv*14)%2===0)return;
 
-  if(invincible){
+  if(!p.arriving && p.inv>0 && Math.floor(p.inv*14)%2===0)return;
+
+  drawPlayerArrivalTrail(p);
+
+  if(invincible || p.arriving){
     ctx.save();
-    ctx.strokeStyle="rgba(80,200,255,0.5)";
+    ctx.strokeStyle = p.arriving ? "rgba(0,255,140,0.55)" : "rgba(80,200,255,0.5)";
     ctx.lineWidth=2;
     ctx.beginPath();
     ctx.arc(p.x+p.w/2,p.y+p.h/2,p.hbr+4,0,Math.PI*2);
@@ -195,22 +232,27 @@ function drawPlayer(){
 }
 
 function drawShots(){
-  const lW=rdy(gc.laser)?gc.laser.width*SCALE.laser:16;
-  const lH=rdy(gc.laser)?gc.laser.height*SCALE.laser:16;
+  const lBaseW=rdy(gc.laser)?gc.laser.width*SCALE.laser:16;
+  const lBaseH=rdy(gc.laser)?gc.laser.height*SCALE.laser:16;
+  const lW=Math.round(lBaseW*2);
+  const lH=lBaseH;
 
   for(const s of G.pShots){
     if(s.type==="shot"){
       spr(gc.shot,"shot",s.x,s.y);
     } else {
-      const lx=Math.round(s.px+s.pw/2-lW/2),yE=Math.round(s.py+10);
+      const lx=Math.round(s.px+s.pw/2-lW/2);
+      const yE=Math.round(s.py+8);
+
       ctx.save();
-      ctx.globalAlpha=.25;
+      ctx.globalAlpha=.22;
       ctx.fillStyle="#0ff";
-      ctx.fillRect(lx-8,0,lW+16,yE);
+      ctx.fillRect(lx-10,0,lW+20,yE);
       ctx.restore();
+
       let ty=0;
       while(ty<yE){
-        spr(gc.laser,"laser",lx,ty);
+        ctx.drawImage(gc.laser,lx,ty,lW,lH);
         ty+=Math.max(1,lH);
       }
     }
