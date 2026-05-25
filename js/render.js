@@ -195,24 +195,35 @@ function drawPlayer(){
 }
 
 function drawShots(){
-  const lW=rdy(gc.laser)?gc.laser.width*SCALE.laser:16;
-  const lH=rdy(gc.laser)?gc.laser.height*SCALE.laser:16;
+  const baseW=rdy(gc.laser)?gc.laser.width*SCALE.laser:16;
+  const baseH=rdy(gc.laser)?gc.laser.height*SCALE.laser:16;
+
+  const lW=Math.round(baseW*2);
+  const lH=Math.round(baseH*2);
 
   for(const s of G.pShots){
     if(s.type==="shot"){
       spr(gc.shot,"shot",s.x,s.y);
     } else {
-      const lx=Math.round(s.px+s.pw/2-lW/2),yE=Math.round(s.py+10);
+      const px=s.px+s.pw/2;
+      const laserX=Math.round(px-lW/2);
+      const startY=Math.round(s.py+20);
       ctx.save();
-      ctx.globalAlpha=.25;
-      ctx.fillStyle="#0ff";
-      ctx.fillRect(lx-8,0,lW+16,yE);
-      ctx.restore();
+      ctx.globalAlpha=1;
+      ctx.imageSmoothingEnabled=false;
+
       let ty=0;
-      while(ty<yE){
-        spr(gc.laser,"laser",lx,ty);
-        ty+=Math.max(1,lH);
+      while(ty<startY){
+        if(rdy(gc.laser)){
+          ctx.drawImage(gc.laser,laserX,ty,lW,lH);
+        } else {
+          ctx.fillStyle="#44f0ff";
+          ctx.fillRect(laserX,ty,lW,lH);
+        }
+        ty+=Math.max(1,lH-2);
       }
+
+      ctx.restore();
     }
   }
 }
