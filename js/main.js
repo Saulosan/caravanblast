@@ -8,6 +8,16 @@ function startFromTitle(){
 
 function updateTitle(dt){
   titleT+=dt;
+
+  if(!titleBGMStarted){
+    playBGM("title");
+    titleBGMStarted=true;
+  }
+
+  if(!titleVoicePlayed){
+    playVoice("titlescreen");
+    titleVoicePlayed=true;
+  }
 }
 
 function updateIntro(dt){
@@ -18,6 +28,7 @@ function updateIntro(dt){
     introFlashOn=!introFlashOn;
     if(introFlashCount>=6){
       appState="game";
+      stopVoice();
       playBGM("stage1");
       startPlayerArrival();
     }
@@ -117,9 +128,6 @@ function updMedals(dt){
   G.medals=G.medals.filter(m=>m.alive);
 }
 
-// ====================================
-// RESPAWN + ARRIVAL
-// ====================================
 let playerRespawning=false;
 let playerRespawnTimer=0;
 const PLAYER_RESPAWN_DELAY=2.0;
@@ -130,6 +138,12 @@ let bossMusicQueued=false;
 
 let gameCompletedVoicePlayed=false;
 let gameOverVoicePlayed=false;
+let titleVoicePlayed=false;
+let titleBGMStarted=false;
+
+let endScreenResetLocked=false;
+let endScreenResetTimer=0;
+const END_SCREEN_RESET_DELAY=15.0;
 
 const BOSS_WARNING_BGM_DELAY=4.6;
 
@@ -178,6 +192,66 @@ function updateBossWarningMusicDelay(dt){
     bossMusicQueued=false;
     playBGM("boss");
   }
+}
+
+function lockEndScreenReset(){
+  endScreenResetLocked=true;
+  endScreenResetTimer=END_SCREEN_RESET_DELAY;
+}
+
+function updateEndScreenResetLock(dt){
+  if(!endScreenResetLocked)return;
+  endScreenResetTimer-=dt;
+  if(endScreenResetTimer<=0){
+    endScreenResetTimer=0;
+    endScreenResetLocked=false;
+  }
+}
+
+function canResetFromEndScreen(){
+  return !endScreenResetLocked;
+}
+
+function tryResetFromEndScreen(){
+  if(appState!=="gameover" && appState!=="win")return;
+  if(!canResetFromEndScreen())return;
+  resetGame();
+}
+
+function drawLoadingScreen(){
+  ctx.fillStyle="#000";
+  ctx.fillRect(0,0,VW,VH);
+
+  ctx.save();
+  ctx.textAlign="center";
+
+  ctx.fillStyle="#fff";
+  ctx.font="bold 18px Georgia,serif";
+  ctx.fillText("Caravan Blast é uma criação de Saulo Santiago.",VW/2,130);
+
+  ctx.font="13px monospace";
+  ctx.fillStyle="#cfcfcf";
+  ctx.fillText("A Intenção desse trabalho é criar um jogo cheio de",VW/2,190);
+  ctx.fillText("surpresas, desafios e competitividade,",VW/2,214);
+  ctx.fillText("numa versão rápida e desafiadora.",VW/2,238);
+  ctx.fillText("Espero que gostem.",VW/2,276);
+
+  const bw=320,bh=16,bx=Math.floor(VW/2-bw/2),by=380;
+  ctx.fillStyle="#111";
+  ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle="#666";
+  ctx.lineWidth=2;
+  ctx.strokeRect(bx,by,bw,bh);
+
+  ctx.fillStyle="#ff8800";
+  ctx.fillRect(bx+2,by+2,bw-4,bh-4);
+
+  ctx.font="12px monospace";
+  ctx.fillStyle="#aaa";
+  ctx.fillText("Clique ou aperte qualquer tecla para iniciar",VW/2,430);
+
+  ctx.textAlign="left";
+  ctx.restore();
 }
 
 function update(dt){
@@ -276,7 +350,6 @@ function update(dt){
   updHUD();
 }
 
-// botoes do gamepad que iniciam/reiniciam (borda de subida)
 const gpMenuPrev={a:false,start:false,b:false};
 
 function readGamepadMenu(){
@@ -297,9 +370,18 @@ function readGamepadMenu(){
   const anyPressed=(aNow&&!gpMenuPrev.a)||(startNow&&!gpMenuPrev.start)||(bNow&&!gpMenuPrev.b);
 
   if(anyPressed){
-    if(appState==="title")startFromTitle();
-    else if(appState==="gameover")resetGame();
-    else if(appState==="win")resetGame();
+    if(appState==="loading"){
+      unlockAndStart();
+    }
+    else if(appState==="title"){
+      startFromTitle();
+    }
+    else if(appState==="gameover" && canResetFromEndScreen()){
+      resetGame();
+    }
+    else if(appState==="win" && canResetFromEndScreen()){
+      resetGame();
+    }
   }
 
   gpMenuPrev.a=aNow;
@@ -307,50 +389,30 @@ function readGamepadMenu(){
   gpMenuPrev.b=bNow;
 }
 
-// ── SPLASH / AUDIO UNLOCK ────────────────────────────────────────────────────
 let audioUnlocked=false;
 let splashDone=false;
-
-function drawSplash(){
-  ctx.fillStyle="#000";
-  ctx.fillRect(0,0,VW,VH);
-  ctx.save();
-  ctx.textAlign="center";
-  ctx.font="bold 42px Georgia,serif";
-  ctx.strokeStyle="#ff8800";
-  ctx.lineWidth=5;
-  ctx.strokeText("Caravan Blast!",VW/2,VH/2-40);
-  const grad=ctx.createLinearGradient(0,VH/2-90,0,VH/2-10);
-  grad.addColorStop(0,"#fff");
-  grad.addColorStop(1,"#ff8800");
-  ctx.fillStyle=grad;
-  ctx.fillText("Caravan Blast!",VW/2,VH/2-40);
-  const pulse=0.5+0.5*Math.sin(Date.now()*0.004);
-  ctx.globalAlpha=pulse;
-  ctx.fillStyle="#aaa";
-  ctx.font="13px monospace";
-  ctx.fillText("Clique ou aperte qualquer tecla para iniciar",VW/2,VH/2+20);
-  ctx.globalAlpha=1;
-  ctx.textAlign="left";
-  ctx.restore();
-}
 
 function unlockAndStart(){
   if(splashDone)return;
   splashDone=true;
   audioUnlocked=true;
-  playBGM("title");
-  playVoice("titlescreen");
+  preloadGameAudio();
+  titleVoicePlayed=false;
+  titleBGMStarted=false;
   appState="title";
 }
 
-function ensureTitleBGM(){
-  if(audioUnlocked)playBGM("title");
-}
+window.addEventListener("keydown",()=>{
+  if(appState==="loading")unlockAndStart();
+},false);
 
-window.addEventListener("keydown",()=>{if(!splashDone)unlockAndStart();},false);
-window.addEventListener("mousedown",()=>{if(!splashDone)unlockAndStart();},false);
-window.addEventListener("touchstart",()=>{if(!splashDone)unlockAndStart();},{passive:true});
+window.addEventListener("mousedown",()=>{
+  if(appState==="loading")unlockAndStart();
+},false);
+
+window.addEventListener("touchstart",()=>{
+  if(appState==="loading")unlockAndStart();
+},{passive:true});
 
 function loop(ts){
   const dt=Math.min((ts-lastT)/1000,.033);
@@ -360,60 +422,79 @@ function loop(ts){
   readGamepad();
   readGamepadMenu();
 
-  if(appState==="splash"){
-    drawSplash();
+  if(appState==="loading"){
+    drawLoadingScreen();
+    requestAnimationFrame(loop);
+    return;
   }
-  else if(appState==="title"){
+
+  if(appState==="title"){
     updateTitle(dt);
     drawTitle(dt);
+    requestAnimationFrame(loop);
+    return;
   }
-  else if(appState==="intro"){
+
+  if(appState==="intro"){
     updateIntro(dt);
     drawIntro(dt);
+    requestAnimationFrame(loop);
+    return;
   }
-  else if(appState==="gameover"){
+
+  if(appState==="gameover"){
     if(!gameOverVoicePlayed){
       playVoice("gameover");
       gameOverVoicePlayed=true;
+      lockEndScreenReset();
     }
+
+    updateEndScreenResetLock(dt);
     drawBG(dt);
     drawGO();
+    requestAnimationFrame(loop);
+    return;
   }
-  else if(appState==="win"){
+
+  if(appState==="win"){
     if(!gameCompletedVoicePlayed){
       playVoice("congratulations");
       gameCompletedVoicePlayed=true;
+      lockEndScreenReset();
     }
+
+    updateEndScreenResetLock(dt);
     drawBG(dt);
     drawWin();
+    requestAnimationFrame(loop);
+    return;
   }
-  else {
-    update(dt);
-    drawBG(dt);
-    if(G.boss)drawBossHPBar(G.boss);
 
-    if(G.boss&&G.boss.entering){
-      drawMedals();
-      drawShots();
-      drawEnemies();
-      drawBullets();
-      drawExpl();
-      drawPlayer();
-      drawBoss(G.boss);
-    } else {
-      if(G.boss)drawBoss(G.boss);
-      drawMedals();
-      drawShots();
-      drawEnemies();
-      drawBullets();
-      drawExpl();
-      drawPlayer();
-    }
+  update(dt);
+  drawBG(dt);
+  if(G.boss)drawBossHPBar(G.boss);
 
-    drawScreenFlash();
-    drawComboPopup();
-    drawWarning();
+  if(G.boss&&G.boss.entering){
+    drawMedals();
+    drawShots();
+    drawEnemies();
+    drawBullets();
+    drawExpl();
+    drawPlayer();
+    drawBoss(G.boss);
+  } else {
+    if(G.boss)drawBoss(G.boss);
+    drawMedals();
+    drawShots();
+    drawEnemies();
+    drawBullets();
+    drawExpl();
+    drawPlayer();
   }
+
+  drawScreenFlash();
+  drawComboPopup();
+  drawWarning();
 
   requestAnimationFrame(loop);
 }
@@ -422,20 +503,10 @@ let gameStarted=false;
 function checkAndStart(){
   if(!gameStarted){
     gameStarted=true;
-    appState="splash";
+    appState="loading";
     resize();
     requestAnimationFrame(loop);
   }
 }
-
-(function loadingLoop(ts){
-  lastT=ts||0;
-  if(bgReady>=5&&gifReady>=TOTAL_GIFS){
-    checkAndStart();
-    return;
-  }
-  drawLoading();
-  requestAnimationFrame(loadingLoop);
-})();
 
 initAssets(checkAndStart);

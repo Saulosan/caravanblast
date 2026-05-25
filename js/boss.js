@@ -6,8 +6,8 @@ function spawnBoss(){
   G.boss={x:VW/2-bw/2,y:startY,w:bw,h:bh,hp:1000,hpMax:1000,alive:true,
     entering:true,
     entryStartY:startY,
-    entryScale:6.0,      // começa GRANDE
-    entryRot:Math.PI,    // começa virado (180 graus = de cabeça pra cima)
+    entryScale:6.0,
+    entryRot:Math.PI,
     entrySpeed:180,
     targetY:20,
     hitFlash:0,deathFlashT:0,vx:0,mDir:1,mT:0,baseY:20,yOffset:0,yTarget:0,yTimer:0,
@@ -15,18 +15,15 @@ function spawnBoss(){
     laserActive:false,laserTimer:0,laserVx:0,
     cycleTimer:0,cyclePhase:"cannon",dead:false,lastMedalHp:1000};
   document.getElementById("boss-hp-wrap").style.display="block";
-  playBGM("boss");
 }
 
 function updBoss(dt){
   const b=G.boss;if(!b)return;
 
-  /* ── MORTE ── */
   if(b.dead){
     bossDeathT+=dt;b.deathFlashT+=dt;
 
     if(bossDeathPhase==="dying"){
-      // Gira e encolhe DEVAGAR por ~5s gerando explosoes
       bossDeathRot+=0.6*dt;
       bossDeathScale=Math.max(0.6,bossDeathScale-dt*0.06);
       if(Math.random()<0.55){
@@ -42,11 +39,8 @@ function updBoss(dt){
     }
 
     else if(bossDeathPhase==="nova"){
-      // Onda cresce rapido ate cobrir a tela (~0.8s)
       bossNova+=VW*1.6*dt;
-      // Boss para de girar/encolher durante a nova — fica congelado grande
       if(bossNova>=VW*1.2){
-        // Flash sincronizado com onda no tamanho maximo
         screenFlash=1.0;
         bossDeathPhase="flash";
         bossDeathT=0;
@@ -54,7 +48,6 @@ function updBoss(dt){
     }
 
     else if(bossDeathPhase==="flash"){
-      // Segura o flash por ~0.15s e some instantaneamente
       bossDeathT+=dt;
       if(bossDeathT>=0.15){
         G.boss=null;
@@ -72,15 +65,12 @@ function updBoss(dt){
   if(b.hitFlash>0)b.hitFlash-=dt;
   b.deathFlashT=0;
 
-  /* ── ENTRADA: desce de baixo, zoom out + rotacao ── */
   if(b.entering){
     b.y-=b.entrySpeed*dt;
     const totalDist=b.entryStartY-b.targetY;
     const traveled=b.entryStartY-b.y;
     const prog=clamp(traveled/totalDist,0,1);
-    // escala: 6.0 -> 1.0
     b.entryScale=6.0-(5.0*prog);
-    // rotacao: PI -> 0 (vira de cabeca pra cima ate posicao normal)
     b.entryRot=Math.PI*(1-prog);
     if(b.y<=b.targetY){
       b.y=b.targetY;
@@ -93,7 +83,6 @@ function updBoss(dt){
     return;
   }
 
-  /* ── MOVIMENTO NORMAL ── */
   if(b.laserActive){
     b.laserVx=clamp(b.laserVx+(b.mDir*180*dt),-160,160);
     if(b.x<=10||b.x>=VW-b.w-10){b.mDir=-b.mDir;b.laserVx*=-1;}
