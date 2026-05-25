@@ -13,12 +13,12 @@ const PLAYER_FRAME_H = 32;
 // 14-17 = loop esquerda
 const PANIM = {
   idle:             { frames:[0,1,2,3],       fps:12, loop:true  },
-  turning_right:    { frames:[4,5,6],         fps:14, loop:false },
-  turning_left:     { frames:[7,8,9],         fps:14, loop:false },
+  turning_right:    { frames:[4,5,6],         fps:16,  loop:false },
+  turning_left:     { frames:[7,8,9],         fps:16,  loop:false },
   loop_right:       { frames:[10,11,12,13],   fps:12, loop:true  },
   loop_left:        { frames:[14,15,16,17],   fps:12, loop:true  },
-  returning_right:  { frames:[6,5,4],         fps:14, loop:false },
-  returning_left:   { frames:[9,8,7],         fps:14, loop:false },
+  returning_right:  { frames:[6,5,4],         fps:16,  loop:false },
+  returning_left:   { frames:[9,8,7],         fps:16,  loop:false },
 };
 
 const playerAnimState = {
@@ -107,71 +107,8 @@ function syncPlayerSize(){
   G.player.h = PLAYER_FRAME_H * SCALE.player;
 }
 
-// ============================================================
-//  ESTADO DE ENTRADA / RESPAWN
-// ============================================================
-
-function startPlayerArrival(){
-  const p = G.player;
-
-  p.arriving = true;
-  p.arrivalPhase = 0;
-  p.arrivalTargetMidY = Math.floor(VH * 0.45);
-  p.arrivalTargetEndY = VH - 120;
-  p.arrivalSpeedFast = 420;
-  p.arrivalSpeedSlow = 180;
-
-  p.x = Math.floor(VW / 2 - p.w / 2);
-  p.y = VH + 40;
-
-  p.inv = 999;
-  setPlayerAnim("idle");
-}
-
-function updatePlayerArrival(dt){
-  const p = G.player;
-
-  if(!p.arriving) return false;
-
-  if(p.arrivalPhase === 0){
-    p.y -= p.arrivalSpeedFast * dt;
-    if(p.y <= p.arrivalTargetMidY){
-      p.y = p.arrivalTargetMidY;
-      p.arrivalPhase = 1;
-    }
-    return true;
-  }
-
-  if(p.arrivalPhase === 1){
-    p.y += p.arrivalSpeedSlow * dt;
-    if(p.y >= p.arrivalTargetEndY){
-      p.y = p.arrivalTargetEndY;
-      p.arriving = false;
-      p.arrivalPhase = 0;
-      p.inv = 1.5;
-    }
-    return true;
-  }
-
-  return false;
-}
-
-// ============================================================
-//  UPDATE PRINCIPAL
-// ============================================================
-
 function updPlayer(dt){
   const p = G.player;
-
-  if(p.inv > 0 && p.inv !== 999){
-    p.inv = Math.max(0, p.inv - dt);
-  }
-
-  if(updatePlayerArrival(dt)){
-    tickPlayerAnim(dt);
-    return;
-  }
-
   const spd = laserUsing ? p.spd * p.lMult : p.spd;
 
   let mx = 0, my = 0;
@@ -197,7 +134,7 @@ function updPlayer(dt){
       G.pShots.push({
         type:"laser",
         px:p.x,
-        py:p.y + Math.floor(p.h * 0.45),
+        py:p.y,
         pw:p.w,
         alive:true,
         ttl:.05
@@ -211,7 +148,7 @@ function updPlayer(dt){
       G.pShots.push({
         type:"shot",
         x:p.x + p.w/2 - sw2/2,
-        y:p.y - sh2 + 4,
+        y:p.y - sh2,
         w:sw2,
         h:sh2,
         vy:-580,
@@ -238,12 +175,6 @@ function updShots(dt){
 }
 
 function updLaser(dt){
-  const p = G.player;
-  if(p.arriving){
-    laserUsing = false;
-    return;
-  }
-
   laserUsing = K["KeyC"] && laserEnergy > 0 && laserCD === 0;
 
   if(laserUsing){
@@ -257,14 +188,13 @@ function updLaser(dt){
 
 function dmgPlayer(){
   const p = G.player;
-
-  if(p.arriving) return;
-  if(p.inv > 0) return;
-
   if(!infiniteLives) p.lives--;
-
-  p.inv = 2.5;
+  p.inv = 1.8;
   expl(p.x + p.w/2, p.y + p.h/2, "#6699ff");
+  p.x = VW/2 - p.w/2;
+  p.y = VH - 120;
+
+  setPlayerAnim("idle");
 
   comboX = 1;
   comboKills = 0;
@@ -274,8 +204,5 @@ function dmgPlayer(){
     gameOver = true;
     stopBGM();
     appState = "gameover";
-    return;
   }
-
-  beginPlayerRespawn();
 }
