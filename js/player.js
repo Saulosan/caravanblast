@@ -99,9 +99,11 @@ function syncPlayerSize(){
 // ============================================================
 let flgPlayerControl = 1;
 let playerArriving = false;
-let playerArrivalPhase = 0; // 0=subindo até meio, 1=descendo até posição inicial
+let playerArrivalPhase = 0;
 const ARRIVAL_SPEED_UP = 820;
 const ARRIVAL_SPEED_DOWN = 420;
+
+let laserWasAvailable = true;
 
 // ============================================================
 // PLAYER ARRIVAL LOGIC
@@ -217,6 +219,10 @@ function updShots(dt){
 }
 
 function updLaser(dt){
+    const prevLaserUsing = laserUsing;
+    const prevLaserCD = laserCD;
+    const prevLaserEnergy = laserEnergy;
+
     if(flgPlayerControl === 0 || playerArriving){
         laserUsing = false;
     } else {
@@ -225,10 +231,22 @@ function updLaser(dt){
 
     if(laserUsing){
         laserEnergy = Math.max(0, laserEnergy - dt);
-        if(laserEnergy === 0) laserCD = LASER_COOLDOWN;
+        if(laserEnergy === 0){
+            laserCD = LASER_COOLDOWN;
+        }
     } else if(laserCD > 0){
         laserCD = Math.max(0, laserCD - dt);
         laserEnergy = Math.min(LASER_MAX, (1 - (laserCD / LASER_COOLDOWN)) * LASER_MAX);
+    }
+
+    if(prevLaserUsing && prevLaserEnergy > 0 && laserEnergy === 0){
+        playVoice("laserdepleted");
+        laserWasAvailable = false;
+    }
+
+    if(!laserWasAvailable && prevLaserCD > 0 && laserCD === 0){
+        playVoice("laserready");
+        laserWasAvailable = true;
     }
 }
 

@@ -25,12 +25,17 @@ function updateIntro(dt){
 }
 
 function onEnemyKilled(pts){
+  const prevComboX=comboX;
+
   score+=pts*comboX;
   if(!comboBossLock){
     comboKills++;
     comboT=COMBO_DUR;
     const nx=Math.min(10,1+Math.floor(comboKills/5));
-    if(nx>comboX)comboX=nx;
+    if(nx>comboX){
+      comboX=nx;
+      if(comboX>prevComboX)playVoice("comboup");
+    }
   }
 }
 
@@ -49,6 +54,9 @@ function updCombo(dt){
   if(comboBossLock)return;
   comboT-=dt;
   if(comboT<=0){
+    if(comboX>1 || comboKills>0){
+      playVoice("combofinish");
+    }
     comboT=0;
     comboX=1;
     comboKills=0;
@@ -116,6 +124,15 @@ let playerRespawning=false;
 let playerRespawnTimer=0;
 const PLAYER_RESPAWN_DELAY=2.0;
 
+let bossWarningVoicePlayed=false;
+let bossMusicDelayTimer=0;
+let bossMusicQueued=false;
+
+let gameCompletedVoicePlayed=false;
+let gameOverVoicePlayed=false;
+
+const BOSS_WARNING_BGM_DELAY=4.6;
+
 function beginPlayerRespawn(){
   playerRespawning=true;
   playerRespawnTimer=PLAYER_RESPAWN_DELAY;
@@ -143,6 +160,7 @@ function startPlayerArrival(){
   laserUsing=false;
 
   setPlayerAnim("arriving");
+  playVoice("engage");
 }
 
 function updPlayerRespawn(dt){
@@ -150,6 +168,15 @@ function updPlayerRespawn(dt){
   playerRespawnTimer-=dt;
   if(playerRespawnTimer<=0){
     startPlayerArrival();
+  }
+}
+
+function updateBossWarningMusicDelay(dt){
+  if(!bossMusicQueued)return;
+  bossMusicDelayTimer-=dt;
+  if(bossMusicDelayTimer<=0){
+    bossMusicQueued=false;
+    playBGM("boss");
   }
 }
 
@@ -174,11 +201,21 @@ function update(dt){
     case 1:
       bgSpeedTarget=3;
       comboBossLock=true;
+      bossWarningVoicePlayed=false;
+      bossMusicQueued=false;
+      bossMusicDelayTimer=0;
       stage=2;
       warnT=WARN_DUR;
+      stopBGM();
       break;
 
     case 2:
+      if(!bossWarningVoicePlayed){
+        playVoice("warningbossgracioli");
+        bossWarningVoicePlayed=true;
+        bossMusicQueued=true;
+        bossMusicDelayTimer=BOSS_WARNING_BGM_DELAY;
+      }
       warnT-=dt;
       warnB+=dt*5;
       if(warnT<=0){
@@ -191,6 +228,8 @@ function update(dt){
       updBoss(dt);
       break;
   }
+
+  updateBossWarningMusicDelay(dt);
 
   updPlayer(dt);
   updShots(dt);
@@ -301,6 +340,7 @@ function unlockAndStart(){
   splashDone=true;
   audioUnlocked=true;
   playBGM("title");
+  playVoice("titlescreen");
   appState="title";
 }
 
@@ -332,10 +372,18 @@ function loop(ts){
     drawIntro(dt);
   }
   else if(appState==="gameover"){
+    if(!gameOverVoicePlayed){
+      playVoice("gameover");
+      gameOverVoicePlayed=true;
+    }
     drawBG(dt);
     drawGO();
   }
   else if(appState==="win"){
+    if(!gameCompletedVoicePlayed){
+      playVoice("congratulations");
+      gameCompletedVoicePlayed=true;
+    }
     drawBG(dt);
     drawWin();
   }
