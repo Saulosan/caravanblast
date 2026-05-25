@@ -149,6 +149,8 @@ function drawBoss(b){
 
 function drawPlayer(){
   const p=G.player;
+
+  if(p.x<-150 || p.y>VH+120)return;
   if(p.inv>0&&Math.floor(p.inv*14)%2===0)return;
 
   if(invincible){
@@ -185,6 +187,17 @@ function drawPlayer(){
   const sx=frame*PLAYER_FRAME_W;
   const dw=Math.round(PLAYER_FRAME_W*SCALE.player);
   const dh=Math.round(PLAYER_FRAME_H*SCALE.player);
+
+  if(playerArriving && playerArrivalPhase===0){
+    ctx.save();
+    ctx.globalAlpha=0.28;
+    ctx.fillStyle="#00ff44";
+    const cx=p.x+dw/2;
+    const topY=p.y+dh-6;
+    const beamW=18;
+    ctx.fillRect(cx-beamW/2,topY,beamW,VH-topY+30);
+    ctx.restore();
+  }
 
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(

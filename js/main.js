@@ -19,6 +19,7 @@ function updateIntro(dt){
     if(introFlashCount>=6){
       appState="game";
       playBGM("stage1");
+      startPlayerArrival();
     }
   }
 }
@@ -109,29 +110,45 @@ function updMedals(dt){
 }
 
 // ====================================
-// RESPAWN
+// RESPAWN + ARRIVAL
 // ====================================
 let playerRespawning=false;
 let playerRespawnTimer=0;
-const PLAYER_RESPAWN_DELAY=2.4;
+const PLAYER_RESPAWN_DELAY=2.0;
 
 function beginPlayerRespawn(){
   playerRespawning=true;
   playerRespawnTimer=PLAYER_RESPAWN_DELAY;
 
   const p=G.player;
-  p.arriving=false;
-  p.arrivalPhase=0;
-  p.inv=999;
+  playerArriving=false;
+  playerArrivalPhase=0;
+  flgPlayerControl=0;
+  p.inv=0;
   p.x=-200;
   p.y=VH+200;
+}
+
+function startPlayerArrival(){
+  playerRespawning=false;
+  playerArriving=true;
+  playerArrivalPhase=0;
+  flgPlayerControl=0;
+
+  const p=G.player;
+  p.x=VW/2-p.w/2;
+  p.y=VH+80;
+  p.inv=0;
+  p.fire=0;
+  laserUsing=false;
+
+  setPlayerAnim("arriving");
 }
 
 function updPlayerRespawn(dt){
   if(!playerRespawning)return;
   playerRespawnTimer-=dt;
   if(playerRespawnTimer<=0){
-    playerRespawning=false;
     startPlayerArrival();
   }
 }
@@ -144,12 +161,14 @@ function update(dt){
 
   switch(stage){
     case 0:
-      G.spawnT-=dt;
-      if(G.spawnT<=0){
-        nextWave();
-        G.spawnT=1.6+Math.random()*1.2;
+      if(flgPlayerControl===1 && !playerArriving){
+        G.spawnT-=dt;
+        if(G.spawnT<=0){
+          nextWave();
+          G.spawnT=1.6+Math.random()*1.2;
+        }
+        if(phaseT>=BOSS_AT)doBossSkip();
       }
-      if(phaseT>=BOSS_AT)doBossSkip();
       break;
 
     case 1:
@@ -175,10 +194,11 @@ function update(dt){
 
   updPlayer(dt);
   updShots(dt);
+  updLaser(dt);
 
   if(!playerRespawning){
     updEnemies(dt);
-    updLaser(dt);
+
     for(const b of G.eBullets){
       if(!b.alive)continue;
       b.x+=b.vx*dt;
@@ -186,9 +206,17 @@ function update(dt){
       if(b.x<-30||b.x>VW+30||b.y<-30||b.y>VH+30)b.alive=false;
     }
     G.eBullets=G.eBullets.filter(b=>b.alive);
-    collisions();
+
+    if(flgPlayerControl===1 && !playerArriving){
+      collisions();
+    }
   } else {
-    updLaser(dt);
+    for(const b of G.eBullets){
+      if(!b.alive)continue;
+      b.x+=b.vx*dt;
+      b.y+=b.vy*dt;
+      if(b.x<-30||b.x>VW+30||b.y<-30||b.y>VH+30)b.alive=false;
+    }
     G.eBullets=G.eBullets.filter(b=>b.alive);
   }
 
@@ -203,7 +231,7 @@ function update(dt){
   updCombo(dt);
   updPlayerRespawn(dt);
 
-  if(G.player.inv>0 && G.player.inv!==999)G.player.inv-=dt;
+  if(G.player.inv>0)G.player.inv-=dt;
   if(screenFlash>0)screenFlash=Math.max(0,screenFlash-dt*2.2);
 
   updHUD();
