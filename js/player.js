@@ -170,85 +170,30 @@ function updPlayer(dt){
 
     updatePlayerAnimFromInput();
     tickPlayerAnim(dt);
-
-    p.fire -= dt;
-
-    if(laserUsing){
-        if(p.fire <= 0){
-            G.pShots.push({
-                type:"laser",
-                px:p.x,
-                py:p.y,
-                pw:p.w,
-                alive:true,
-                ttl:.05
-            });
-            p.fire = .04;
-        }
-    } else if(K["KeyX"]){
-        const sw2 = sw(gc.shot,"shot");
-        const sh2 = sh(gc.shot,"shot");
-        if(p.fire <= 0){
-            G.pShots.push({
-                type:"shot",
-                x:p.x + p.w/2 - sw2/2,
-                y:p.y - sh2,
-                w:sw2,
-                h:sh2,
-                vy:-580,
-                alive:true
-            });
-            p.fire = .075;
-        }
-    }
+    // O disparo básico é processado em update() (main.js) via updateBasicFire,
+    // para que o loop de som pare corretamente mesmo sem controle do jogador.
 }
 
 function updShots(dt){
     for(const s of G.pShots){
         if(!s.alive) continue;
 
-        if(s.type === "shot"){
-            s.y += s.vy * dt;
-            if(s.y + s.h < 0) s.alive = false;
-        } else {
+        if(s.type === "laser"){
             s.ttl -= dt;
             if(s.ttl <= 0 || !laserUsing) s.alive = false;
+        } else if(s.type === "missile"){
+            updMissile(s, dt);
+        } else { // basic (red/green/purple)
+            if(s.homing) updHomingShot(s, dt);
+            s.x += s.vx * dt;
+            s.y += s.vy * dt;
+            if(s.y + s.h < 0 || s.x + s.w < -20 || s.x > VW + 20 || s.y > VH + 20) s.alive = false;
         }
     }
     G.pShots = G.pShots.filter(s => s.alive);
 }
 
-function updLaser(dt){
-    const prevLaserUsing = laserUsing;
-    const prevLaserCD = laserCD;
-    const prevLaserEnergy = laserEnergy;
-
-    if(flgPlayerControl === 0 || playerArriving){
-        laserUsing = false;
-    } else {
-        laserUsing = K["KeyC"] && laserEnergy > 0 && laserCD === 0;
-    }
-
-    if(laserUsing){
-        laserEnergy = Math.max(0, laserEnergy - dt);
-        if(laserEnergy === 0){
-            laserCD = LASER_COOLDOWN;
-        }
-    } else if(laserCD > 0){
-        laserCD = Math.max(0, laserCD - dt);
-        laserEnergy = Math.min(LASER_MAX, (1 - (laserCD / LASER_COOLDOWN)) * LASER_MAX);
-    }
-
-    if(prevLaserUsing && prevLaserEnergy > 0 && laserEnergy === 0){
-        playVoice("laserdepleted");
-        laserWasAvailable = false;
-    }
-
-    if(!laserWasAvailable && prevLaserCD > 0 && laserCD === 0){
-        playVoice("laserready");
-        laserWasAvailable = true;
-    }
-}
+// O laser/míssil é gerido por updSpecial() em weapons.js.
 
 function dmgPlayer(){
     const p = G.player;
@@ -258,6 +203,9 @@ function dmgPlayer(){
     playerArriving = false;
     playerArrivalPhase = 0;
     laserUsing = false;
+    specialActive = false;
+    if(typeof startBossLaserLinger==="function")startBossLaserLinger();
+    onPlayerDeathWeaponReset();
     p.inv = 0;
 
     expl(p.x + p.w/2, p.y + p.h/2, "#6699ff");
@@ -275,7 +223,8 @@ function dmgPlayer(){
     if(p.lives <= 0 && !infiniteLives){
         gameOver = true;
         stopBGM();
-        appState = "gameover";
+        stopAllLoopSfx();
+        beginScreenTransition(()=>{ appState = "gameover"; });
     } else {
         beginPlayerRespawn();
     }

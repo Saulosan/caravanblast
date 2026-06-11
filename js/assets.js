@@ -1,8 +1,10 @@
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 const wrap=document.getElementById("canvas-wrap");
+const shell=document.getElementById("shell");
 const hudLeft=document.getElementById("hud-left");
 const hudRight=document.getElementById("hud-right");
+const bezelOverlay=document.getElementById("bezel-overlay");
 ctx.imageSmoothingEnabled=false;
 canvas.width=VW;
 canvas.height=VH;
@@ -11,6 +13,7 @@ const gc={
   player:document.getElementById("gc-player"),
   shot:document.getElementById("gc-shot"),
   laser:document.getElementById("gc-laser"),
+  laserSpark:document.getElementById("gc-laser-spark"),
   enemy:document.getElementById("gc-enemy"),
   enemy2:document.getElementById("gc-enemy2"),
   enemy3:document.getElementById("gc-enemy3"),
@@ -18,6 +21,14 @@ const gc={
   bullet:document.getElementById("gc-bullet"),
   boss:document.getElementById("gc-boss"),
   titleShip:document.getElementById("gc-title-ship"),
+  tiro03:document.getElementById("gc-tiro03"),
+  tiro04:document.getElementById("gc-tiro04"),
+  missile:document.getElementById("gc-missile"),
+  capRed:document.getElementById("gc-cap-red"),
+  capGreen:document.getElementById("gc-cap-green"),
+  capPurple:document.getElementById("gc-cap-purple"),
+  capBlue:document.getElementById("gc-cap-blue"),
+  capOrange:document.getElementById("gc-cap-orange"),
 };
 
 // Spritesheet do player
@@ -39,13 +50,29 @@ const bgLayers=[
 const GIF_SRCS={
   shot:"assets/sprites/tiro-01.gif",
   laser:"assets/sprites/tiro-02.gif",
-  enemy:"assets/sprites/Enemy.gif",
+  laserSpark:"assets/sprites/laser-spark.gif",
   enemy2:"assets/sprites/Enemy2.gif",
   enemy3:"assets/sprites/Enemy3.gif",
   enemy4:"assets/sprites/Enemy4.gif",
   bullet:"assets/sprites/bullet.gif",
   boss:"assets/sprites/Boss1.gif",
+  tiro03:"assets/sprites/tiro-03.gif",
+  tiro04:"assets/sprites/tiro-04.gif",
+  missile:"assets/sprites/missile-orange.gif",
+  capRed:"assets/sprites/power-up-red-1.gif",
+  capGreen:"assets/sprites/power-up-green-2.gif",
+  capPurple:"assets/sprites/power-up-purple-3.gif",
+  capBlue:"assets/sprites/power-up-blue-L.gif",
+  capOrange:"assets/sprites/power-up-orange-M.gif",
 };
+
+const enemy1Sheet=new Image();
+enemy1Sheet.src="assets/sprites/Enemy1.png";
+let enemy1Ready=false;
+
+const titleLogo=new Image();
+let titleLogoReady=false;
+titleLogo.src="assets/sprites/title.png";
 
 const TW=52,TH=28;
 function mkThumb(container,label){
@@ -60,12 +87,14 @@ function updThumb(cvs,src,ok){
   else{tc.fillStyle="#300";tc.fillRect(0,0,TW,TH);tc.fillStyle="#f55";tc.font="8px monospace";tc.fillText("ERR",4,18);cvs.classList.add("thumb-err");cvs.classList.remove("thumb-ok");}
 }
 
-let bgReady=0,gifReady=0;
+let bgReady=0,gifReady=0,sheetReady=0;
 const TOTAL_GIFS=Object.keys(GIF_SRCS).length;
+const TOTAL_SHEETS=1;
 const gifThumbs={};
 let bgSpeedMult=1,bgSpeedTarget=1;
 
 let titleShipReady=false;
+
 (function loadTitleShip(){
   if(!window.gifler||!gc.titleShip)return;
   gifler("assets/sprites/Caravan-title.gif").frames(gc.titleShip,(c2,f)=>{
@@ -90,6 +119,14 @@ function initAssets(onReady){
   playerSheet.onload=()=>{updThumb(playerThumbCvs,playerSheet,true);};
   playerSheet.onerror=()=>{updThumb(playerThumbCvs,null,false);};
 
+  const enemy1ThumbCvs=mkThumb(dbgSpr,"Enemy1.png");
+  enemy1Sheet.onload=()=>{enemy1Ready=true;sheetReady++;updThumb(enemy1ThumbCvs,enemy1Sheet,true);checkReady(onReady);};
+  enemy1Sheet.onerror=()=>{sheetReady++;updThumb(enemy1ThumbCvs,null,false);checkReady(onReady);};
+
+  const titleLogoThumbCvs=mkThumb(dbgSpr,"title.png");
+  titleLogo.onload=()=>{titleLogoReady=true;updThumb(titleLogoThumbCvs,titleLogo,true);};
+  titleLogo.onerror=()=>{updThumb(titleLogoThumbCvs,null,false);};
+
   Object.entries(GIF_SRCS).forEach(([key,src])=>{
     gifThumbs[key]=mkThumb(dbgSpr,src.split("/").pop());
     let first=true;
@@ -102,30 +139,13 @@ function initAssets(onReady){
   });
 }
 
-function checkReady(onReady){if(bgReady>=5&&gifReady>=TOTAL_GIFS)onReady();}
+function checkReady(onReady){if(bgReady>=5&&gifReady>=TOTAL_GIFS&&sheetReady>=TOTAL_SHEETS)onReady();}
 
 function resize(){
   const W=window.innerWidth;
   const H=window.innerHeight;
-  const scale=Math.min(H/VH,W/VW);
-  const pw=Math.round(VW*scale);
-  const ph=Math.round(VH*scale);
-  const pfLeft=Math.round((W-pw)/2);
-  const pfTop=Math.round((H-ph)/2);
-  canvas.style.transform="scale("+scale+")";
-  canvas.style.width=VW+"px";
-  canvas.style.height=VH+"px";
-  wrap.style.left=pfLeft+"px";
-  wrap.style.top=pfTop+"px";
-  wrap.style.width=pw+"px";
-  wrap.style.height=ph+"px";
-  hudLeft.style.left="0px";
-  hudLeft.style.top="0px";
-  hudLeft.style.width=pfLeft+"px";
-  hudLeft.style.height=H+"px";
-  hudRight.style.left=(pfLeft+pw)+"px";
-  hudRight.style.top="0px";
-  hudRight.style.width=(W-pfLeft-pw)+"px";
-  hudRight.style.height=H+"px";
+  const g=computeGameLayout(W,H);
+  applyGameLayout(g,H,isBezelActive());
+  updateGameAreaGuide(g);
 }
 window.addEventListener("resize",resize);

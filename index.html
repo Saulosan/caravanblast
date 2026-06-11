@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Caravan Blast!</title>
-  <link rel="stylesheet" href="css/style.css?v=1778040356"/>
+  <link rel="stylesheet" href="css/style.css?v=25"/>
 </head>
 <body>
 <div id="shell">
@@ -26,6 +26,11 @@
       <div class="hud-label">Laser</div>
       <div class="bar-bg"><div class="bar-fill" id="ui-laser-bar" style="width:100%;"></div></div>
       <div style="font-size:9px;color:#446;" id="ui-laser-status">pronto</div>
+    </div>
+    <div class="hud-sep"></div>
+    <div>
+      <div class="hud-label">Tempo</div>
+      <div class="hud-value" id="ui-phase-time">00:00</div>
     </div>
     <div class="hud-sep"></div>
     <div id="boss-hp-wrap" style="display:none">
@@ -65,27 +70,38 @@
   </div>
 </div>
 
+<img id="bezel-overlay" alt="" />
+<div id="game-area-guide"></div>
+
 <div id="gif-pool">
   <canvas id="gc-player"></canvas><canvas id="gc-shot"></canvas>
-  <canvas id="gc-laser"></canvas><canvas id="gc-enemy"></canvas>
+  <canvas id="gc-laser"></canvas><canvas id="gc-laser-spark"></canvas><canvas id="gc-enemy"></canvas>
   <canvas id="gc-enemy2"></canvas><canvas id="gc-enemy3"></canvas>
   <canvas id="gc-enemy4"></canvas><canvas id="gc-bullet"></canvas>
   <canvas id="gc-boss"></canvas><canvas id="gc-title-ship"></canvas>
+  <canvas id="gc-tiro03"></canvas><canvas id="gc-tiro04"></canvas><canvas id="gc-missile"></canvas>
+  <canvas id="gc-cap-red"></canvas><canvas id="gc-cap-green"></canvas><canvas id="gc-cap-purple"></canvas>
+  <canvas id="gc-cap-blue"></canvas><canvas id="gc-cap-orange"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/gifler@0.1.0/gifler.min.js"></script>
-<script src="js/utils.js?v=1778040356"></script>
-<script src="js/config.js?v=1778040356"></script>
-<script src="js/audio.js?v=1778040356"></script>
-<script src="js/assets.js?v=1778040356"></script>
-<script src="js/input.js?v=1778040356"></script>
-<script src="js/state.js?v=1778040356"></script>
-<script src="js/player.js?v=1778040356"></script>
-<script src="js/enemies.js?v=1778040356"></script>
-<script src="js/boss.js?v=1778040356"></script>
-<script src="js/collision.js?v=1778040356"></script>
-<script src="js/hud.js?v=1778040356"></script>
-<script src="js/render.js?v=1778040356"></script>
-<script src="js/main.js?v=1778040356"></script>
+<script src="js/utils.js?v=25"></script>
+<script src="js/config.js?v=25"></script>
+<script src="js/audio.js?v=25"></script>
+<script src="js/assets.js?v=25"></script>
+<script src="js/input.js?v=25"></script>
+<script src="js/state.js?v=25"></script>
+<script src="js/player.js?v=25"></script>
+<script src="js/weapons.js?v=25"></script>
+<script src="js/enemies.js?v=25"></script>
+<script src="js/boss.js?v=25"></script>
+<script src="js/collision.js?v=25"></script>
+<script src="js/hud.js?v=25"></script>
+<script src="js/settings.js?v=25"></script>
+<script src="js/bezel.js?v=25"></script>
+<script src="js/postfx.js?v=25"></script>
+<script src="js/spritefont.js?v=25"></script>
+<script src="js/render.js?v=25"></script>
+<script src="js/main.js?v=25"></script>
 </body>
 </html>
